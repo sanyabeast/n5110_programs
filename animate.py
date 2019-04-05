@@ -19,28 +19,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import math
 import time
 
 import Adafruit_Nokia_LCD as LCD
 import Adafruit_GPIO.SPI as SPI
 
 from PIL import Image
-from PIL import ImageDraw
 from PIL import ImageFont
+from PIL import ImageDraw
 
 
 # Raspberry Pi hardware SPI config:
-#DC = 23
-#RST = 24
-#SPI_PORT = 0
-#SPI_DEVICE = 0
-
-# Raspberry Pi software SPI config:
-SCLK = 17
-DIN = 18
 DC = 27
 RST = 23
-CS = 8
+SPI_PORT = 0
+SPI_DEVICE = 0
 
 # Beaglebone Black hardware SPI config:
 # DC = 'P9_15'
@@ -48,19 +42,8 @@ CS = 8
 # SPI_PORT = 1
 # SPI_DEVICE = 0
 
-# Beaglebone Black software SPI config:
-# DC = 'P9_15'
-# RST = 'P9_12'
-# SCLK = 'P8_7'
-# DIN = 'P8_9'
-# CS = 'P8_11'
-
-
 # Hardware SPI usage:
-#disp = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
-
-# Software SPI usage (defaults to bit-bang SPI interface):
-disp = LCD.PCD8544(DC, RST, SCLK, DIN, CS)
+disp = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
 
 # Initialize library.
 disp.begin(contrast=60)
@@ -69,22 +52,9 @@ disp.begin(contrast=60)
 disp.clear()
 disp.display()
 
-# Create blank image for drawing.
+# Create image buffer.
 # Make sure to create image with mode '1' for 1-bit color.
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
-
-# Get drawing object to draw on image.
-draw = ImageDraw.Draw(image)
-
-# Draw a white filled box to clear the image.
-draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
-
-# Draw some shapes.
-draw.ellipse((2,2,22,22), outline=0, fill=255)
-draw.rectangle((24,2,44,22), outline=0, fill=255)
-draw.polygon([(46,22), (56,2), (66,22)], outline=0, fill=255)
-draw.line((68,22,81,2), fill=0)
-draw.line((68,2,81,22), fill=0)
 
 # Load default font.
 font = ImageFont.load_default()
@@ -93,13 +63,47 @@ font = ImageFont.load_default()
 # Some nice fonts to try: http://www.dafont.com/bitmap.php
 # font = ImageFont.truetype('Minecraftia.ttf', 8)
 
-# Write some text.
-draw.text((8,30), 'Hello World!', font=font)
+# Create drawing object.
+draw = ImageDraw.Draw(image)
 
-# Display image.
-disp.image(image)
-disp.display()
+# Define text and get total width.
+text = 'NOKIA 5110: NOT JUST FOR SNAKE ANYMORE. THIS IS AN OLD SCHOOL DEMO SCROLLER!! GREETZ TO: LADYADA & THE ADAFRUIT CREW, TRIXTER, FUTURE CREW, AND FARBRAUSCH'
+maxwidth, height = draw.textsize(text, font=font)
 
+# Set starting position.
+startpos = 83
+pos = startpos
+
+# Animate text moving in sine wave.
 print('Press Ctrl-C to quit.')
 while True:
-    time.sleep(1.0)
+    # Clear image buffer.
+    draw.rectangle((0,0,83,47), outline=255, fill=255)
+    # Enumerate characters and draw them offset vertically based on a sine wave.
+    x = pos
+    for i, c in enumerate(text):
+        # Stop drawing if off the right side of screen.
+        if x > 83:
+            break
+        # Calculate width but skip drawing if off the left side of screen.
+        if x < -10:
+            width, height = draw.textsize(c, font=font)
+            x += width
+            continue
+        # Calculate offset from sine wave.
+        y = (24-8)+math.floor(10.0*math.sin(x/83.0*2.0*math.pi))
+        # Draw text.
+        draw.text((x, y), c, font=font, fill=0)
+        # Increment x position based on chacacter width.
+        width, height = draw.textsize(c, font=font)
+        x += width
+        # Draw the image buffer.
+        disp.image(image)
+        disp.display()
+        # Move position for next frame.
+        pos -= 2
+        # Start over if text has scrolled completely off left side of screen.
+        if pos < -maxwidth:
+            pos = startpos
+    # Pause briefly before drawing next frame.
+    time.sleep(0.1)
