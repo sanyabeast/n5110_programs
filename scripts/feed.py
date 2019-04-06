@@ -9,7 +9,6 @@ import psutil
 import math
 import requests
 import json
-import time
 
 
 from PIL import Image
@@ -42,19 +41,19 @@ disp.display()
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
 draw = ImageDraw.Draw(image)
 
-#font = ImageFont.truetype('res/fonts/silkscreen.ttf', 8)
+font = ImageFont.truetype('res/fonts/silkscreen.ttf', 8)
 #font = ImageFont.truetype('res/fonts/retro_c.ttf', 7)
 #font = ImageFont.truetype('res/fonts/minecraftia.ttf', 8)
-#font = ImageFont.truetype('res/fonts/type_writer.ttf', 8)
+#font = ImageFont.truetype('res/fonts/visitor2.ttf', 12)
+##font = ImageFont.truetype('res/fonts/type_writer.ttf', 8)
 #font = ImageFont.truetype('res/fonts/pixelade.ttf', 14)
-font = ImageFont.truetype('res/fonts/digitalix.ttf', 5)
+#font = ImageFont.truetype('res/fonts/digitalix.ttf', 5)
 #font = ImageFont.load_default()
 
 # data
 currentTime = 0
 
 cpu = CPUTemperature()
-initDate = time.time()
 
 ipAddressUpdateInterval = 15 * 60
 ramUsageUpdateInterval = 10
@@ -62,7 +61,6 @@ cpuUsageUpdateInterval = 5
 cpuTempUpdateInterval = 5
 currentWlanDataUpdateInterval = 15 * 60
 weatherUpdateInterval = 2 * 60 * 60
-workingTimeUpdateInterval = 1
 
 ipAddressValue = ""
 ramUsageValue = ""
@@ -70,7 +68,6 @@ cpuUsageValue = ""
 cpuTempValue = ""
 currentWlanDataValue = ""
 weatherValue = ""
-workingTime = ""
 
 def updateWeather():
 	global weatherValue 
@@ -105,7 +102,6 @@ def updateMonitoringData(force):
 	global cpuTempValue
 	global currentWlanDataValue	
 	global weatherValue
-	global workingTime
 	
 	if (force or currentTime < 15 or currentTime % ipAddressUpdateInterval == 0):
 		ipAddressValue = "ip: " + check_output(['hostname', '-I'])
@@ -119,38 +115,8 @@ def updateMonitoringData(force):
 		currentWlanDataValue = wireless.current()
 	if (force or currentTime % weatherUpdateInterval == 0):
 		updateWeather()
-	if (force or currentTime % workingTimeUpdateInterval == 0):
-		now = time.time()
-		delta = now - initDate
-		workingTime = formatDate(delta)
 
-def formatDate(seconds):
-	result = ""	
-	
-	if ( seconds < 24 * 60 * 60 ):
-		s = str(int(seconds % 60))
-		result = s + "s"
-	
-	if ( seconds > 60 and (seconds < 365 * 24 * 60 * 60) ):	
-		m = str(int((seconds / 60) % 60))
-		result = m + "m " + result 
-	
-	if ( seconds > 60 * 60 ):
-		h = str(int((seconds / (60 * 60)) % 24))
-		result = h + "h " + result 
-		
-	if ( seconds > 24 * 60 * 60 ):
-		d = str(int((seconds / (24 * 60 * 60)) % 365 ))
-		result = d + "d " + result 
-		
-	if ( seconds > 365 * 24 * 60 * 60 ):
-		y = str(int((seconds / (365 * 24 * 60 * 60))))
-		result = y + "y " + result 
-	
-	return "WT: " + result
-
-
-
+updateWeather()
 
 
 def redraw():
@@ -163,11 +129,10 @@ def redraw():
 	
 
 def renderTextLine(line, text, drawLine):
-	lineHeight = 7
+	lineHeight = 8
 	lineOffset = 7
-	offset = 0
 	
-	draw.text((0,( line * lineHeight + offset )), text, font=font, fill=0)
+	draw.text((0,( line * lineHeight - 2 )), text, font=font, fill=0)
 	
 	if ( drawLine ):
 		draw.line((4,( line * lineHeight ) + lineOffset,LCD.LCDWIDTH - 8,( line * lineHeight ) + lineOffset), fill=0)
@@ -183,11 +148,9 @@ def renderData():
 	renderTextLine( 3, ramUsageValue, False )
 	renderTextLine( 4, cpuTempValue, False )
 	renderTextLine( 5, weatherValue, False )
-	renderTextLine( 6, workingTime, False )
 
 
 
-updateWeather()
 updateMonitoringData(True)
 
 
