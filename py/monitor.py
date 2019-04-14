@@ -10,17 +10,16 @@ import math
 import requests
 import json
 import time
-
+import os
 
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 from subprocess import check_output
 from gpiozero import CPUTemperature
-from wireless import Wireless
 
-wireless = Wireless()
-
+__dirname__ = os.path.dirname(os.path.abspath(__file__))
+__rootdir__ = os.path.normpath(__dirname__ + "/..") + "/"
 
 # Raspberry Pi software SPI config:
 SCLK = 17
@@ -42,12 +41,12 @@ disp.display()
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
 draw = ImageDraw.Draw(image)
 
-#font = ImageFont.truetype('res/fonts/silkscreen.ttf', 8)
-#font = ImageFont.truetype('res/fonts/retro_c.ttf', 7)
-#font = ImageFont.truetype('res/fonts/minecraftia.ttf', 8)
-#font = ImageFont.truetype('res/fonts/type_writer.ttf', 8)
-#font = ImageFont.truetype('res/fonts/pixelade.ttf', 14)
-font = ImageFont.truetype('res/fonts/digitalix.ttf', 5)
+font = ImageFont.truetype(__rootdir__+ 'res/fonts/silkscreen.ttf', 8)
+#font = ImageFont.truetype(__rootdir__+ 'res/fonts/retro_c.ttf', 7)
+#font = ImageFont.truetype(__rootdir__+ 'res/fonts/minecraftia.ttf', 8)
+#font = ImageFont.truetype(__rootdir__+ 'res/fonts/type_writer.ttf', 8)
+#font = ImageFont.truetype(__rootdir__+ 'res/fonts/pixelade.ttf', 14)
+#font = ImageFont.truetype(__rootdir__+ 'res/fonts/digitalix.ttf', 5)
 #font = ImageFont.load_default()
 
 # data
@@ -56,15 +55,17 @@ currentTime = 0
 cpu = CPUTemperature()
 initDate = time.time()
 
-ipAddressUpdateInterval = 15 * 60
+ipAddressUpdateInterval = 30 * 60
+extIpAddressUpdateInterval = 30 * 60
 ramUsageUpdateInterval = 10
 cpuUsageUpdateInterval = 5
 cpuTempUpdateInterval = 5
 currentWlanDataUpdateInterval = 15 * 60
-weatherUpdateInterval = 2 * 60 * 60
+weatherUpdateInterval = 1 * 60 * 60
 workingTimeUpdateInterval = 1
 
 ipAddressValue = ""
+extIpAddressValue = ""
 ramUsageValue = ""
 cpuUsageValue = ""
 cpuTempValue = ""
@@ -89,17 +90,29 @@ def updateWeather():
 		country = data[2]
 		temp = data[3]
 
-		weatherValue = country + ":" + city + " " + temp + " C`"
+		#weatherValue = country + ":" + city + " " + temp + " C`"
+		weatherValue = "Kyiv: " + temp + " C`"
 		weatherUpdateInterval = 2 * 60 * 60
 	except:
 		print("Unable to request weather")
 		weatherUpdateInterval = 15
 		
+def update_external_ip():
+	global extIpAddressValue
 	
+	ip = ""
 	
+	try:
+		ip = requests.get("https://api.myip.com").json()["ip"]
+	except Exception, e:
+		print(str(e))
+		
+	extIpAddressValue = ip
+
 
 def updateMonitoringData(force):
 	global ipAddressValue
+	global extIpAddressValue
 	global ramUsageValue
 	global cpuUsageValue
 	global cpuTempValue
@@ -109,6 +122,8 @@ def updateMonitoringData(force):
 	
 	if (force or currentTime < 15 or currentTime % ipAddressUpdateInterval == 0):
 		ipAddressValue = "ip: " + check_output(['hostname', '-I'])
+	if (force or currentTime % extIpAddressUpdateInterval == 0):
+		update_external_ip()
 	if (force or currentTime % ramUsageUpdateInterval == 0):
 		ramUsageValue  = "ram: " + str(psutil.virtual_memory().used / 1024 / 1024 ) + "/" + str(psutil.virtual_memory().total / 1024 / 1024 ) + " MB"
 	if (force or currentTime % cpuUsageUpdateInterval == 0):	
@@ -116,7 +131,7 @@ def updateMonitoringData(force):
 	if (force or currentTime % cpuTempUpdateInterval == 0):
 		cpuTempValue = "TEMP: " + str(math.floor(cpu.temperature)) + " C`"
 	if (force or currentTime % currentWlanDataUpdateInterval == 0):
-		currentWlanDataValue = wireless.current()
+		currentWlanDataValue = check_output(["hostname", "-I"])
 	if (force or currentTime % weatherUpdateInterval == 0):
 		updateWeather()
 	if (force or currentTime % workingTimeUpdateInterval == 0):
@@ -158,14 +173,14 @@ def redraw():
 	
 	renderData()
 	
-	disp.image(image)
+	disp.image(image.rotate(180))
 	disp.display()
 	
 
 def renderTextLine(line, text, drawLine):
-	lineHeight = 7
+	lineHeight = 6
 	lineOffset = 7
-	offset = 0
+	offset = -2
 	
 	draw.text((0,( line * lineHeight + offset )), text, font=font, fill=0)
 	
@@ -176,14 +191,16 @@ def renderTextLine(line, text, drawLine):
 def renderData():
 	updateMonitoringData(False)
 	
-	renderTextLine( 0, currentWlanDataValue, False )
+	#renderTextLine( 0, currentWlanDataValue, False )
 	
-	renderTextLine( 1, ipAddressValue, False )
+	renderTextLine( 0, ipAddressValue, False )
+	renderTextLine( 1, extIpAddressValue, False )
 	renderTextLine( 2, cpuUsageValue, False )
-	renderTextLine( 3, ramUsageValue, False )
-	renderTextLine( 4, cpuTempValue, False )
-	renderTextLine( 5, weatherValue, False )
-	renderTextLine( 6, workingTime, False )
+	renderTextLine( 3, cpuUsageValue, False )
+	renderTextLine( 4, ramUsageValue, False )
+	renderTextLine( 5, cpuTempValue, False )
+	renderTextLine( 6, weatherValue, False )
+	renderTextLine( 7, workingTime, False )
 
 
 
@@ -194,5 +211,6 @@ updateMonitoringData(True)
 print('Press Ctrl-C to quit.')
 while True:
 	currentTime+=1
+	currentTime = currentTime % (24 * 60 * 60)
 	redraw()
 	time.sleep(1.0)

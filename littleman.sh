@@ -1,5 +1,5 @@
 #!bin/sh
-# monitor.sh 
+# littleman.sh 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 echo $DIR
-sudo python "$DIR/py/monitor.py"
+sudo python "$DIR/py/littleman.py"
