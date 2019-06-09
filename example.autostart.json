@@ -1,0 +1,6 @@
+{
+	"commands": [
+		"cd  /home/pi/projects/rpi_tools && sudo bash monitor.sh",
+		"cd  /home/pi/projects/rpi_tools && sudo node js/tbot.js"
+	]
+}
