@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python9
 # -*- coding: utf-8 -*- 
 
 import time
@@ -41,12 +41,12 @@ disp.display()
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
 draw = ImageDraw.Draw(image)
 
-font = ImageFont.truetype(__rootdir__+ 'res/fonts/silkscreen.ttf', 8)
+#font = ImageFont.truetype(__rootdir__+ 'res/fonts/silkscreen.ttf', 10)
 #font = ImageFont.truetype(__rootdir__+ 'res/fonts/retro_c.ttf', 7)
 #font = ImageFont.truetype(__rootdir__+ 'res/fonts/minecraftia.ttf', 8)
-#font = ImageFont.truetype(__rootdir__+ 'res/fonts/type_writer.ttf', 8)
+#ont = ImageFont.truetype(__rootdir__+ 'res/fonts/type_writer.ttf', 8)
 #font = ImageFont.truetype(__rootdir__+ 'res/fonts/pixelade.ttf', 14)
-#font = ImageFont.truetype(__rootdir__+ 'res/fonts/digitalix.ttf', 5)
+font = ImageFont.truetype(__rootdir__+ 'res/fonts/digitalix.ttf', 5)
 #font = ImageFont.load_default()
 
 # data
@@ -178,9 +178,9 @@ def redraw():
 	
 
 def renderTextLine(line, text, drawLine):
-	lineHeight = 6
+	lineHeight = 7
 	lineOffset = 7
-	offset = -2
+	offset = 0
 	
 	draw.text((0,( line * lineHeight + offset )), text, font=font, fill=0)
 	
@@ -196,11 +196,10 @@ def renderData():
 	renderTextLine( 0, ipAddressValue, False )
 	renderTextLine( 1, extIpAddressValue, False )
 	renderTextLine( 2, cpuUsageValue, False )
-	renderTextLine( 3, cpuUsageValue, False )
-	renderTextLine( 4, ramUsageValue, False )
-	renderTextLine( 5, cpuTempValue, False )
-	renderTextLine( 6, weatherValue, False )
-	renderTextLine( 7, workingTime, False )
+	renderTextLine( 3, ramUsageValue, False )
+	renderTextLine( 4, cpuTempValue, False )
+	renderTextLine( 5, weatherValue, False )
+	renderTextLine( 6, workingTime, False )
 
 
 
