@@ -3,6 +3,21 @@
 
 import time
 
+import RPi.GPIO as GPIO
+import time
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(4,GPIO.OUT)
+p=GPIO.PWM(4,50)
+p.start(0)
+while True:
+    for i in range(0,101,2): #Increase in Brightness
+        p.ChangeDutyCycle(i)
+        time.sleep(.1)
+    for i in range(100,-1,-2): #Fading in Brightness
+        p.ChangeDutyCycle(i)
+        time.sleep(.1)
+
+
 import Adafruit_Nokia_LCD as LCD
 import Adafruit_GPIO.SPI as SPI
 import psutil
@@ -11,6 +26,7 @@ import requests
 import json
 import time
 import os
+
 
 from PIL import Image
 from PIL import ImageDraw
@@ -32,7 +48,7 @@ CS = 8
 disp = LCD.PCD8544(DC, RST, SCLK, DIN, CS)
 
 # Initialize library.
-disp.begin(contrast=100)
+disp.begin(contrast=100, bias=1)
 
 # Clear display.
 disp.clear()

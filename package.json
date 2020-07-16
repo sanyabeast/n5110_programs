@@ -2,6 +2,8 @@
 	"dependencies": {
 		"node-telegram-bot-api": "latest",
 		"request": "latest",
-		"request-promise-native": "latest"
+		"request-promise-native": "latest",
+		"node-cmd": "latest",
+		"node-fetch": "latest"
 	}
 }

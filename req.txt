@@ -1,3 +1,4 @@
 sleekxmpp
 requests
 psutil
+adafruit-circuitpython-pcd8544
